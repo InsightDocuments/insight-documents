@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightDocuments</title>
+</head>
+<body>
+    <body>
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    
+        <h1>Welcome to InsightDocuments</h1>
+    <!-- File Upload Section -->
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <label for="file">Upload your PDF file:</label>
+        <input type="file" id="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- Search Bar -->
+    <form action="/search" method="GET">
+        <label for="query">Search your documents:</label>
+        <input type="text" id="query" name="query" placeholder="Enter your question" required>
+        <button type="submit">Search</button>
+    </form>
+</body>
+</html>
