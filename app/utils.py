@@ -1,4 +1,4 @@
-import PyPDF2
+from pypdf import PdfReader
 
 def extract_text_from_pdf(file_path):
     """
@@ -12,10 +12,9 @@ def extract_text_from_pdf(file_path):
     """
     text = ""
     try:
-        with open(file_path, "rb") as pdf_file:
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            for page in pdf_reader.pages:
-                text += page.extract_text()
+        pdf_reader = PdfReader(file_path)
+        for page in pdf_reader.pages:
+            text += page.extract_text()
     except Exception as e:
         raise RuntimeError(f"Error extracting text from PDF: {e}")
     return text
