@@ -1,18 +1,19 @@
-import unittest
 import os
+import pytest
 from app.utils import extract_text_from_pdf
 
-class TestUtils(unittest.TestCase):
-    def test_extract_text_from_pdf(self):
-        # Create a temporary PDF file for testing
-        test_pdf_path = "test.pdf"
-        with open(test_pdf_path, "wb") as f:
-            f.write(b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\nstartxref\n0\n%%EOF")
+def test_extract_text_from_pdf():
+    # Path to a sample PDF file
+    file_path = os.path.join("uploads", "Govt-job.pdf")
 
-        with self.assertRaises(Exception):
-            extract_text_from_pdf(test_pdf_path)
+    # Ensure the file exists
+    assert os.path.exists(file_path), "PDF file does not exist in the uploads directory"
 
-        os.remove(test_pdf_path)
+    # Extract text
+    extracted_text = extract_text_from_pdf(file_path)
 
-if __name__ == "__main__":
-    unittest.main()
+    # Assert the extracted text is not empty
+    assert extracted_text.strip() != "", "Extracted text is empty"
+
+    # (Optional) Print the extracted text for debugging
+    print(extracted_text)
