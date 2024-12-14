@@ -1,35 +1,25 @@
-from flask import Blueprint, request, jsonify, render_template
 import os
-from .utils import extract_text_from_pdf
+from flask import Blueprint, request, jsonify
+from werkzeug.utils import secure_filename
 
-# Blueprint for main app routes
 main_bp = Blueprint("main", __name__)
 
-# Route to render the main page
-@main_bp.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
-
-# Route to handle file uploads
 @main_bp.route("/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
-    
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
-    
-    if not file.filename.lower().endswith(".pdf"):
+    if not file.filename.endswith(".pdf"):
         return jsonify({"error": "Only PDF files are allowed"}), 400
-
     try:
-        file_path = os.path.join("uploads", file.filename)
-        file.save(file_path)
-        return jsonify({"message": "File uploaded successfully", "file_path": file_path}), 200
+        filename = secure_filename(file.filename)
+        file.save(os.path.join("uploads", filename))
+        return jsonify({"message": "File uploaded successfully"}), 200
     except Exception as e:
         return jsonify({"error": f"File upload failed: {str(e)}"}), 500
-
+        
 # Route to handle search queries
 @main_bp.route("/search", methods=["POST"])
 def search():
