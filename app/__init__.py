@@ -1,15 +1,11 @@
 from flask import Flask
-import os
+from app.routes import main_bp
 
 def create_app():
+    """Create and configure the Flask application."""
     app = Flask(__name__)
-
-    # Configure upload folder
-    app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
+    
     # Register blueprints
-    from .routes import main_bp
     app.register_blueprint(main_bp)
-
+    
     return app
