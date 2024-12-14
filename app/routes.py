@@ -1,25 +1,69 @@
-import os
-from flask import Blueprint, request, jsonify
+from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
+import os
+from app.pdf_processing import extract_text_from_pdf, index_pdf_text
 
-main_bp = Blueprint("main", __name__)
+app = Flask(__name__)
 
-@main_bp.route("/upload", methods=["POST"])
+# Set the upload folder path
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {'pdf'}
+
+def allowed_file(filename):
+    """
+    Checks if the uploaded file has a valid extension.
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
 def upload_file():
-    if "file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No file selected"}), 400
-    if not file.filename.endswith(".pdf"):
-        return jsonify({"error": "Only PDF files are allowed"}), 400
-    try:
+    """
+    Handles PDF file uploads, extracts and indexes text, and returns a success response.
+    """
+    # Check if a file is part of the request
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in the request'}), 400
+
+    file = request.files['file']
+
+    # Check if a file was selected
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    # Validate the file extension
+    if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join("uploads", filename))
-        return jsonify({"message": "File uploaded successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": f"File upload failed: {str(e)}"}), 500
-        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+        try:
+            # Save the uploaded file
+            file.save(file_path)
+
+            # Extract text from the PDF
+            extracted_text = extract_text_from_pdf(file_path)
+
+            # Index the extracted text
+            indexed_text = index_pdf_text(extracted_text, filename)
+
+            # (Optional) Print indexed text for debugging
+            print(indexed_text)
+
+            # Return a success response
+            return jsonify({
+                'message': 'File uploaded and processed successfully',
+                'file_name': filename,
+                'total_pages': len(indexed_text)
+            }), 200
+
+        except Exception as e:
+            return jsonify({'error': f'An error occurred while processing the file: {str(e)}'}), 500
+
+    else:
+        return jsonify({'error': 'Invalid file type. Only PDF files are allowed.'}), 400
+            
 # Route to handle search queries
 @main_bp.route("/search", methods=["POST"])
 def search():
