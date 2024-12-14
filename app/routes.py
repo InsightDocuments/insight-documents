@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, render_template
 import os
 from .utils import extract_text_from_pdf
 
-# Blueprint for main app routes
 main_bp = Blueprint("main", __name__)
 
 # Route to render the main page
@@ -15,12 +14,12 @@ def index():
 def upload_file():
     if "file" not in request.files:
         return jsonify({"error": "No file part in the request"}), 400
-    
+
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
-    
-    if not file.filename.endswith(".pdf"):
+
+    if not file.filename.lower().endswith(".pdf"):
         return jsonify({"error": "Only PDF files are allowed"}), 400
 
     try:
@@ -35,7 +34,7 @@ def upload_file():
 def search():
     query = request.form.get("query")
     file_name = request.form.get("file_name")
-    
+
     if not query or not file_name:
         return jsonify({"error": "Query and file name are required"}), 400
 
@@ -44,12 +43,8 @@ def search():
         return jsonify({"error": "File not found"}), 404
 
     try:
-        # Extract text from the PDF file
         text = extract_text_from_pdf(file_path)
-        
-        # Mock response for now (to be replaced with real NLP processing)
         response = f"Mock response to '{query}': Relevant content here."
-        
         return jsonify({"query": query, "response": response}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
