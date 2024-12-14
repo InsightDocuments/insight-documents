@@ -1,11 +1,13 @@
 from flask import Flask
-from app.routes import main_bp
 
 def create_app():
-    """Create and configure the Flask application."""
+    """
+    Application factory function to initialize the Flask app.
+    """
     app = Flask(__name__)
-    
+
     # Register blueprints
+    from .routes import main_bp
     app.register_blueprint(main_bp)
-    
+
     return app

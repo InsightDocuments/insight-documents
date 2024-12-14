@@ -17,4 +17,5 @@ def extract_text_from_pdf(file_path):
             text += page.extract_text()
     except Exception as e:
         raise RuntimeError(f"Error extracting text from PDF: {e}")
+    
     return text

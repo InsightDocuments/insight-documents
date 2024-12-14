@@ -2,18 +2,19 @@ import os
 import pytest
 from app.utils import extract_text_from_pdf
 
-def test_extract_text_from_pdf():
-    # Path to a sample PDF file
-    file_path = os.path.join("uploads", "Govt-job.pdf")
+@pytest.fixture
+def pdf_file(tmp_path):
+    file_path = tmp_path / "test.pdf"
+    with open(file_path, "wb") as f:
+        f.write(b"%PDF-1.4 Dummy PDF Content")
+    return str(file_path)
 
-    # Ensure the file exists
-    assert os.path.exists(file_path), "PDF file does not exist in the uploads directory"
+def test_extract_text_from_pdf_success(pdf_file):
+    text = extract_text_from_pdf(pdf_file)
+    assert text == "Dummy PDF Content"  # Adjust the assertion based on actual text extraction.
 
-    # Extract text
-    extracted_text = extract_text_from_pdf(file_path)
-
-    # Assert the extracted text is not empty
-    assert extracted_text.strip() != "", "Extracted text is empty"
-
-    # (Optional) Print the extracted text for debugging
-    print(extracted_text)
+def test_extract_text_from_pdf_invalid_path():
+    invalid_path = "nonexistent.pdf"
+    with pytest.raises(RuntimeError) as excinfo:
+        extract_text_from_pdf(invalid_path)
+    assert "Error extracting text from PDF" in str(excinfo.value)

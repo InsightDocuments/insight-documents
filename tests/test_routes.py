@@ -1,22 +1,39 @@
-import unittest
+import pytest
 from app import create_app
 
-class TestRoutes(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app()
-        self.client = self.app.test_client()
+@pytest.fixture
+def client():
+    app = create_app()
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client
 
-    def test_index(self):
-        response = self.client.get("/")
-        self.assertEqual(response.status_code, 200)
+def test_upload_success(client):
+    file_data = b"%PDF-1.4 Dummy PDF Content"
+    data = {"file": (file_data, "test.pdf")}
+    response = client.post("/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+    json_data = response.get_json()
+    assert json_data["message"] == "File uploaded successfully"
 
-    def test_upload_file_no_file(self):
-        response = self.client.post("/upload", data={})
-        self.assertEqual(response.status_code, 400)
+def test_upload_no_file(client):
+    response = client.post("/upload", data={}, content_type="multipart/form-data")
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert json_data["error"] == "No file part in the request"
 
-    def test_search_no_query(self):
-        response = self.client.post("/search", data={})
-        self.assertEqual(response.status_code, 400)
+def test_upload_invalid_extension(client):
+    file_data = b"Dummy text content"
+    data = {"file": (file_data, "test.txt")}
+    response = client.post("/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert json_data["error"] == "Only PDF files are allowed"
 
-if __name__ == "__main__":
-    unittest.main()
+def test_upload_empty_filename(client):
+    file_data = b"%PDF-1.4 Dummy PDF Content"
+    data = {"file": (file_data, "")}
+    response = client.post("/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 400
+    json_data = response.get_json()
+    assert json_data["error"] == "No file selected"
