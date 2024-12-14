@@ -1,13 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 import os
 from app.pdf_processing import extract_text_from_pdf, index_pdf_text
 
-app = Flask(__name__)
-
-# Set the upload folder path
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Define the blueprint
+app = Blueprint('app', __name__)
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf'}
@@ -36,7 +33,7 @@ def upload_file():
     # Validate the file extension
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
 
         try:
             # Save the uploaded file
@@ -47,9 +44,6 @@ def upload_file():
 
             # Index the extracted text
             indexed_text = index_pdf_text(extracted_text, filename)
-
-            # (Optional) Print indexed text for debugging
-            print(indexed_text)
 
             # Return a success response
             return jsonify({
@@ -63,13 +57,15 @@ def upload_file():
 
     else:
         return jsonify({'error': 'Invalid file type. Only PDF files are allowed.'}), 400
-            
-# Route to handle search queries
-@main_bp.route("/search", methods=["POST"])
+
+@app.route('/search', methods=['POST'])
 def search():
+    """
+    Handles search queries for uploaded PDFs.
+    """
     query = request.form.get("query")
     file_name = request.form.get("file_name")
-    
+
     if not query or not file_name:
         return jsonify({"error": "Query and file name are required"}), 400
 
@@ -80,10 +76,11 @@ def search():
     try:
         # Extract text from the PDF file
         text = extract_text_from_pdf(file_path)
-        
+
         # Mock response for now (to be replaced with real NLP processing)
         response = f"Mock response to '{query}': Relevant content here."
-        
+
         return jsonify({"query": query, "response": response}), 200
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
